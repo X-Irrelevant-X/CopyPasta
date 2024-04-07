@@ -80,6 +80,7 @@ class _NoteListState extends State<NoteList> {
             onPressed: () {
               // Handle Add Link button press
             },
+            heroTag: "addLink",
             label: const Text('Add Link', style: TextStyle(fontSize: 16)),
             icon: const Icon(Icons.link),
             elevation: 0,
@@ -92,6 +93,7 @@ class _NoteListState extends State<NoteList> {
                 MaterialPageRoute(builder: (context) => const AddNote()),
               );
             },
+            heroTag: "addNote",
             label: const Text('Add Note', style: TextStyle(fontSize: 16)),
             icon: const Icon(Icons.add_rounded),
             elevation: 0,

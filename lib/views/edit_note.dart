@@ -91,6 +91,7 @@ class _EditNoteState extends State<EditNote> {
         onPressed: () {
           editNote(context);
         },
+        heroTag: "saveNoteE",
         label: const Text('Save Note', style: TextStyle(fontSize: 16)),
         icon: const Icon(Icons.save_rounded),
         elevation: 0,

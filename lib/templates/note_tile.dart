@@ -4,13 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 class NoteTile extends StatelessWidget {
   final String title;
   final String date;
-  final void Function() onTap;
+  final void Function()? onTap;
 
   const NoteTile({
     Key? key,
     required this.title,
     required this.date,
-    required this.onTap,
+    this.onTap,
   }) : super(key: key);
 
   @override
@@ -18,9 +18,9 @@ class NoteTile extends StatelessWidget {
     final theme = Theme.of(context).colorScheme;
     return Center(
       child: ListTile(
-        title: Center(
-          child: Hero(
-            tag: 'noteTitle_${title.hashCode}', // Unique tag for this Hero widget
+        title: Hero( 
+          tag: 'title_${title.hashCode}',
+          child: Center(
             child: Text(
               title,
               style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600),

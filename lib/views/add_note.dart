@@ -67,6 +67,7 @@ class _AddNoteState extends State<AddNote> {
         onPressed: () {
           addNote(context);
         },
+        heroTag: "saveNoteA",
         label: const Text('Save Note', style: TextStyle(fontSize: 16)),
         icon: const Icon(Icons.save_rounded),
         elevation: 0,
