@@ -6,22 +6,26 @@ class NoteTile extends StatelessWidget {
   final String date;
   final void Function() onTap;
 
-  const NoteTile(
-      {super.key,
-      required this.title,
-      required this.date,
-      required this.onTap});
+  const NoteTile({
+    Key? key,
+    required this.title,
+    required this.date,
+    required this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-  final theme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context).colorScheme;
     return Center(
       child: ListTile(
         title: Center(
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
+          child: Hero(
+            tag: 'noteTitle_${title.hashCode}', // Unique tag for this Hero widget
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
         subtitle: Center(

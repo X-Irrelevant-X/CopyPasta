@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../components/noteTile.dart';
-import '../screens/addNote.dart';
-import '../screens/editNote.dart';
+import 'package:copypasta/templates/note_tile.dart';
+import 'package:copypasta/views/add_note.dart';
+import 'package:copypasta/views/edit_note.dart';
 
 class NoteList extends StatefulWidget {
   const NoteList({Key? key});
@@ -56,7 +55,6 @@ class _NoteListState extends State<NoteList> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
@@ -89,7 +87,10 @@ class _NoteListState extends State<NoteList> {
           const SizedBox(width: 15),
           FloatingActionButton.extended(
             onPressed: () {
-              Get.to(() => const AddNote());
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddNote()),
+              );
             },
             label: const Text('Add Note', style: TextStyle(fontSize: 16)),
             icon: const Icon(Icons.add_rounded),
@@ -120,7 +121,15 @@ class _NoteListState extends State<NoteList> {
                 title: note['title'],
                 date: note['createdAt'],
                 onTap: () {
-                  Get.to(() => EditNote(note: note, noteIndex: index));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditNote(
+                        note: note,
+                        noteIndex: index,
+                      ),
+                    ),
+                  );
                 },
               ),
             );

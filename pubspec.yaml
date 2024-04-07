@@ -12,7 +12,6 @@ dependencies:
   connectivity: any
   flutter_broadcasts: any
   google_fonts: any
-  get: any
   intl: any
   shared_preferences: any
 

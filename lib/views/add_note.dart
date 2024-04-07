@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../components/detailsField.dart';
-import '../components/titleField.dart';
+import 'package:copypasta/templates/title.dart';
+import 'package:copypasta/templates/details.dart';
 
 class AddNote extends StatefulWidget {
   const AddNote({Key? key});
@@ -18,8 +17,8 @@ class _AddNoteState extends State<AddNote> {
   final titleController = TextEditingController();
   final detailsController = TextEditingController();
 
-  Future<void> addNote() async {
-  final formattedDate = DateFormat('hh:mm a dd-MM-yyyy').format(DateTime.now());
+  Future<void> addNote(BuildContext context) async {
+    final formattedDate = DateFormat('hh:mm a dd-MM-yyyy').format(DateTime.now());
       
     final Map<String, dynamic> note = {
       'title': titleController.text,
@@ -32,7 +31,7 @@ class _AddNoteState extends State<AddNote> {
     notesData.add(json.encode(note));
     await prefs.setStringList('notes', notesData);
 
-    Get.back();
+    Navigator.pop(context);
   }
 
   @override
@@ -65,7 +64,9 @@ class _AddNoteState extends State<AddNote> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: addNote,
+        onPressed: () {
+          addNote(context);
+        },
         label: const Text('Save Note', style: TextStyle(fontSize: 16)),
         icon: const Icon(Icons.save_rounded),
         elevation: 0,

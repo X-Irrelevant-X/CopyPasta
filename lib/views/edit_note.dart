@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditNote extends StatefulWidget {
@@ -24,7 +23,7 @@ class _EditNoteState extends State<EditNote> {
     detailsController = TextEditingController(text: widget.note['details']);
   }
 
-  Future<void> editNote() async {
+  Future<void> editNote(BuildContext context) async {
     final Map<String, dynamic> updatedNote = {
       'title': titleController.text,
       'details': detailsController.text,
@@ -36,16 +35,16 @@ class _EditNoteState extends State<EditNote> {
     notesData[widget.noteIndex] = json.encode(updatedNote);
     await prefs.setStringList('notes', notesData);
 
-    Get.back();
+    Navigator.pop(context);
   }
 
-  Future<void> deleteNote() async {
+  Future<void> deleteNote(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final notesData = prefs.getStringList('notes') ?? [];
     notesData.removeAt(widget.noteIndex);
     await prefs.setStringList('notes', notesData);
 
-    Get.back();
+    Navigator.pop(context);
   }
 
   @override
@@ -60,7 +59,9 @@ class _EditNoteState extends State<EditNote> {
           style: TextStyle(color: theme.onBackground, fontSize: 16),
         ),
         actions: [
-          IconButton(onPressed: deleteNote, icon: const Icon(Icons.delete))
+          IconButton(onPressed: () {
+            deleteNote(context);
+          }, icon: const Icon(Icons.delete))
         ],
         iconTheme: IconThemeData(color: theme.onBackground),
       ),
@@ -87,7 +88,9 @@ class _EditNoteState extends State<EditNote> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: editNote,
+        onPressed: () {
+          editNote(context);
+        },
         label: const Text('Save Note', style: TextStyle(fontSize: 16)),
         icon: const Icon(Icons.save_rounded),
         elevation: 0,
@@ -95,4 +98,3 @@ class _EditNoteState extends State<EditNote> {
     );
   }
 }
-
