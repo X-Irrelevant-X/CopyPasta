@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:multicast_dns/multicast_dns.dart';
 
 import 'package:copypasta/views/add_note.dart';
 import 'package:copypasta/views/edit_note.dart';
@@ -18,74 +19,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Map<String, dynamic>> items = [];
-  bool isRefreshed = false;
-
   final GlobalKey<OverlayState> overlayKey = GlobalKey<OverlayState>();
+  List<Map<String, dynamic>> items = [];
   OverlayEntry? overlayEntry;
   bool isOverlayVisible = false;
+  bool isRefreshed = false;
 
-  void toggleOverlay() {
-      if (isOverlayVisible) {
-        overlayEntry?.remove();
-        isOverlayVisible = false;
-      } else {
-        showOverlay();
-      }
-  }
-
-  void showOverlay() {
-      overlayEntry = OverlayEntry(
-        builder: (context) => Positioned(
-          bottom: 90, // Adjust the position as needed
-          left: 12, // Adjust the position as needed
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 120,
-                height: 55,
-                child: FloatingActionButton.extended(
-                  onPressed: () {
-
-                  },
-                  label: const Text('Connect'),
-                  icon: const Icon(Icons.route),
-                  heroTag: "connect",
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: 120,
-                height: 55,
-                child: FloatingActionButton.extended(
-                  onPressed: () {
-
-                  },
-                  label: const Text('Send'),
-                  icon: const Icon(Icons.send),
-                  heroTag: "send",
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: 120,
-                height: 55,
-                child: FloatingActionButton.extended(
-                  onPressed: () {},
-                  label: const Text('Recieve'),
-                  icon: const Icon(Icons.download),
-                  heroTag: "recieve",
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      Overlay.of(context)!.insert(overlayEntry!);
-      isOverlayVisible = true;
-  }
 
   @override
   void initState() {
@@ -125,6 +64,23 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> deleteItem(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> notesData = prefs.getStringList('notes') ?? [];
+    final List<String> linksData = prefs.getStringList('links') ?? [];
+
+    Map<String, dynamic> itemToDelete = items[index];
+
+    if (notesData.contains(jsonEncode(itemToDelete))) {
+      notesData.remove(jsonEncode(itemToDelete));
+      await prefs.setStringList('notes', notesData);
+    } else if (linksData.contains(jsonEncode(itemToDelete))) {
+      linksData.remove(jsonEncode(itemToDelete));
+      await prefs.setStringList('links', linksData);
+    }
+    refreshData();
+  }
+
   void refreshData() {
     if (!isRefreshed) {
       getItems();
@@ -145,30 +101,73 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> deleteItem(int index) async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> notesData = prefs.getStringList('notes') ?? [];
-    final List<String> linksData = prefs.getStringList('links') ?? [];
-
-    // Get the original item from the sorted list
-    Map<String, dynamic> itemToDelete = items[index];
-
-    if (notesData.contains(jsonEncode(itemToDelete))) {
-      notesData.remove(jsonEncode(itemToDelete));
-      await prefs.setStringList('notes', notesData);
-    } else if (linksData.contains(jsonEncode(itemToDelete))) {
-      linksData.remove(jsonEncode(itemToDelete));
-      await prefs.setStringList('links', linksData);
-    }
-    refreshData();
-  }
-
   Future<void> launchURL(Uri url) async {
     if (!await launchUrl(
       url, mode: LaunchMode.externalApplication,)
     ) {
       throw Exception('Could not launch $url');
     }
+  }
+
+  void toggleOverlay() {
+    if (isOverlayVisible) {
+      overlayEntry?.remove();
+      isOverlayVisible = false;
+    } else {
+      showOverlay();
+    }
+  }
+
+  void showOverlay() {
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: 90,
+        left: 12, 
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 120,
+              height: 55,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+
+                },
+                label: const Text('Connect'),
+                icon: const Icon(Icons.route),
+                heroTag: "connect",
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: 120,
+              height: 55,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+
+                },
+                label: const Text('Send'),
+                icon: const Icon(Icons.send),
+                heroTag: "send",
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: 120,
+              height: 55,
+              child: FloatingActionButton.extended(
+                onPressed: () {},
+                label: const Text('Recieve'),
+                icon: const Icon(Icons.download),
+                heroTag: "recieve",
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    Overlay.of(context)!.insert(overlayEntry!);
+    isOverlayVisible = true;
   }
 
   @override

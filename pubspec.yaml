@@ -10,11 +10,12 @@ dependencies:
   flutter:
     sdk: flutter
   connectivity: any
-  flutter_broadcasts: any
   google_fonts: any
   intl: any
   shared_preferences: any
   url_launcher: any
+  multicast_dns: any
+  flutter_local_notifications: any
 
 dev_dependencies:
   flutter_test:
