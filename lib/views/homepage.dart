@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-//import 'package:url_launcher/link.dart';
+import 'package:intl/intl.dart';
 
 import 'package:copypasta/views/add_note.dart';
 import 'package:copypasta/views/edit_note.dart';
@@ -21,6 +21,72 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> items = [];
   bool isRefreshed = false;
 
+  final GlobalKey<OverlayState> overlayKey = GlobalKey<OverlayState>();
+  OverlayEntry? overlayEntry;
+  bool isOverlayVisible = false;
+
+  void toggleOverlay() {
+      if (isOverlayVisible) {
+        overlayEntry?.remove();
+        isOverlayVisible = false;
+      } else {
+        showOverlay();
+      }
+  }
+
+  void showOverlay() {
+      overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+          bottom: 90, // Adjust the position as needed
+          left: 12, // Adjust the position as needed
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 120,
+                height: 55,
+                child: FloatingActionButton.extended(
+                  onPressed: () {
+
+                  },
+                  label: const Text('Connect'),
+                  icon: const Icon(Icons.route),
+                  heroTag: "connect",
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: 120,
+                height: 55,
+                child: FloatingActionButton.extended(
+                  onPressed: () {
+
+                  },
+                  label: const Text('Send'),
+                  icon: const Icon(Icons.send),
+                  heroTag: "send",
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: 120,
+                height: 55,
+                child: FloatingActionButton.extended(
+                  onPressed: () {},
+                  label: const Text('Recieve'),
+                  icon: const Icon(Icons.download),
+                  heroTag: "recieve",
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      Overlay.of(context)!.insert(overlayEntry!);
+      isOverlayVisible = true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,27 +95,35 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> getItems() async {
-  final prefs = await SharedPreferences.getInstance();
-  final notesData = prefs.getStringList('notes');
-  final linksData = prefs.getStringList('links');
-  
-  setState(() {
-    items.clear();
-  });
-
-  if (notesData != null) {
+    final prefs = await SharedPreferences.getInstance();
+    final notesData = prefs.getStringList('notes');
+    final linksData = prefs.getStringList('links');
+    
     setState(() {
-      items.addAll(notesData.map((note) => json.decode(note)).cast<Map<String, dynamic>>().toList());
+      items.clear();
     });
+
+    if (notesData != null) {
+      setState(() {
+        items.addAll(notesData.map((note) => json.decode(note)).cast<Map<String, dynamic>>().toList());
+      });
+    }
+
+    if (linksData != null) {
+      setState(() {
+        items.addAll(linksData.map((link) => json.decode(link)).cast<Map<String, dynamic>>().toList());
+      });
+    }
+    sortItems();
   }
 
-  if (linksData != null) {
-    setState(() {
-      items.addAll(linksData.map((link) => json.decode(link)).cast<Map<String, dynamic>>().toList());
+  void sortItems() {
+    items.sort((a, b) {
+      DateTime timeA = DateFormat('hh:mm:ss a dd-MM-yyyy').parse(a['createdAt']);
+      DateTime timeB = DateFormat('hh:mm:ss a dd-MM-yyyy').parse(b['createdAt']);
+      return timeB.compareTo(timeA);
     });
   }
-}
-
 
   void refreshData() {
     if (!isRefreshed) {
@@ -76,11 +150,14 @@ class _HomePageState extends State<HomePage> {
     final List<String> notesData = prefs.getStringList('notes') ?? [];
     final List<String> linksData = prefs.getStringList('links') ?? [];
 
-    if (index < notesData.length) {
-      notesData.removeAt(index);
+    // Get the original item from the sorted list
+    Map<String, dynamic> itemToDelete = items[index];
+
+    if (notesData.contains(jsonEncode(itemToDelete))) {
+      notesData.remove(jsonEncode(itemToDelete));
       await prefs.setStringList('notes', notesData);
-    } else {
-      linksData.removeAt(index - notesData.length);
+    } else if (linksData.contains(jsonEncode(itemToDelete))) {
+      linksData.remove(jsonEncode(itemToDelete));
       await prefs.setStringList('links', linksData);
     }
     refreshData();
@@ -110,11 +187,32 @@ class _HomePageState extends State<HomePage> {
             fontSize: 25,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: refreshData,
+            icon: const Icon(Icons.refresh_rounded, size: 30,),
+          ),
+          const SizedBox(width: 15),
+        ],
         actionsIconTheme: IconThemeData(color: theme.onPrimaryContainer),
       ),
+  
+      //Bottom Nav Bar
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          SizedBox(
+            width: 120,
+            height: 55,
+            child: FloatingActionButton.extended(
+              onPressed: toggleOverlay,
+              heroTag: "share",
+              label: const Text('Share', style: TextStyle(fontSize: 16)),
+              icon: const Icon(Icons.share),
+              elevation: 0,
+            ),
+          ),
+          const SizedBox(width: 7),
           FloatingActionButton.extended(
             onPressed: () {
               Navigator.push(
@@ -123,11 +221,11 @@ class _HomePageState extends State<HomePage> {
               );
             },
             heroTag: "addLink",
-            label: const Text('Add Link', style: TextStyle(fontSize: 16)),
+            label: const Text('Add Link', style: TextStyle(fontSize: 15)),
             icon: const Icon(Icons.link),
             elevation: 0,
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 7),
           FloatingActionButton.extended(
             onPressed: () {
               Navigator.push(
@@ -136,22 +234,15 @@ class _HomePageState extends State<HomePage> {
               );
             },
             heroTag: "addNote",
-            label: const Text('Add Note', style: TextStyle(fontSize: 16)),
-            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Note', style: TextStyle(fontSize: 15)),
+            icon: const Icon(Icons.note_add),
             elevation: 0,
           ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: refreshData,
-              icon: const Icon(Icons.refresh_rounded),
-            ),
-          ],
-        ),
+      bottomNavigationBar: const BottomAppBar(
+        child: Row(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8),

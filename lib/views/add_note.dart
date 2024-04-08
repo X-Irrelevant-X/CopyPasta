@@ -18,7 +18,7 @@ class _AddNoteState extends State<AddNote> {
   final detailsController = TextEditingController();
 
   Future<void> addNote(BuildContext context) async {
-    final formattedDate = DateFormat('hh:mm a dd-MM-yyyy').format(DateTime.now());
+    final formattedDate = DateFormat('hh:mm:ss a dd-MM-yyyy').format(DateTime.now());
       
     final Map<String, dynamic> note = {
       'title': titleController.text,

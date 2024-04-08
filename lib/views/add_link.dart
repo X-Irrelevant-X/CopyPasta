@@ -16,7 +16,7 @@ class _AddLinkState extends State<AddLink> {
   final titleController = TextEditingController();
 
   Future<void> addLink(BuildContext context) async {
-    final formattedDate = DateFormat('hh:mm a dd-MM-yyyy').format(DateTime.now());
+    final formattedDate = DateFormat('hh:mm:ss a dd-MM-yyyy').format(DateTime.now());
       
     final Map<String, dynamic> link = {
       'title': titleController.text,
