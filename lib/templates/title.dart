@@ -25,7 +25,7 @@ class TitleField extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.transparent)
         ),
-        hintText: 'Title',
+        hintText: 'Enter Link or Note Title',
         hintStyle: const TextStyle(fontSize: 22,fontWeight: FontWeight.w600),
       ),
       style: const TextStyle(fontSize: 22,fontWeight: FontWeight.w600),

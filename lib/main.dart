@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         fontFamily: GoogleFonts.mukta().fontFamily,
         useMaterial3: true,
       ),
-      home: const NoteList(),
+      home: const HomePage(),
     );
   }
 }

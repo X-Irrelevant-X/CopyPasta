@@ -2,42 +2,58 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+//import 'package:url_launcher/link.dart';
 
-import 'package:copypasta/templates/note_tile.dart';
 import 'package:copypasta/views/add_note.dart';
 import 'package:copypasta/views/edit_note.dart';
+import 'package:copypasta/views/add_link.dart';
+import 'package:copypasta/templates/tile.dart';
 
-class NoteList extends StatefulWidget {
-  const NoteList({Key? key});
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key});
 
   @override
-  State<NoteList> createState() => _NoteListState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _NoteListState extends State<NoteList> {
-  List<Map<String, dynamic>> notes = [];
+class _HomePageState extends State<HomePage> {
+  List<Map<String, dynamic>> items = [];
   bool isRefreshed = false;
 
   @override
   void initState() {
     super.initState();
-    notes = [];
+    items = [];
     constRefresh();
   }
 
-  Future<void> getNotes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final notesData = prefs.getStringList('notes');
-    if (notesData != null) {
-      setState(() {
-        notes = notesData.map((note) => json.decode(note)).cast<Map<String, dynamic>>().toList();
-      });
-    }
+  Future<void> getItems() async {
+  final prefs = await SharedPreferences.getInstance();
+  final notesData = prefs.getStringList('notes');
+  final linksData = prefs.getStringList('links');
+  
+  setState(() {
+    items.clear();
+  });
+
+  if (notesData != null) {
+    setState(() {
+      items.addAll(notesData.map((note) => json.decode(note)).cast<Map<String, dynamic>>().toList());
+    });
   }
 
-  void refreshNotes() {
+  if (linksData != null) {
+    setState(() {
+      items.addAll(linksData.map((link) => json.decode(link)).cast<Map<String, dynamic>>().toList());
+    });
+  }
+}
+
+
+  void refreshData() {
     if (!isRefreshed) {
-      getNotes();
+      getItems();
       setState(() {
         isRefreshed = true;
       });
@@ -51,8 +67,31 @@ class _NoteListState extends State<NoteList> {
 
   void constRefresh() {
     Timer.periodic(const Duration(seconds: 0), (Timer timer) {
-      getNotes();
+      refreshData();
     });
+  }
+
+  Future<void> deleteItem(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> notesData = prefs.getStringList('notes') ?? [];
+    final List<String> linksData = prefs.getStringList('links') ?? [];
+
+    if (index < notesData.length) {
+      notesData.removeAt(index);
+      await prefs.setStringList('notes', notesData);
+    } else {
+      linksData.removeAt(index - notesData.length);
+      await prefs.setStringList('links', linksData);
+    }
+    refreshData();
+  }
+
+  Future<void> launchURL(Uri url) async {
+    if (!await launchUrl(
+      url, mode: LaunchMode.externalApplication,)
+    ) {
+      throw Exception('Could not launch $url');
+    }
   }
 
   @override
@@ -78,7 +117,10 @@ class _NoteListState extends State<NoteList> {
         children: [
           FloatingActionButton.extended(
             onPressed: () {
-              // Handle Add Link button press
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddLink()),
+              );
             },
             heroTag: "addLink",
             label: const Text('Add Link', style: TextStyle(fontSize: 16)),
@@ -105,7 +147,7 @@ class _NoteListState extends State<NoteList> {
         child: Row(
           children: [
             IconButton(
-              onPressed: refreshNotes,
+              onPressed: refreshData,
               icon: const Icon(Icons.refresh_rounded),
             ),
           ],
@@ -114,23 +156,63 @@ class _NoteListState extends State<NoteList> {
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: ListView.builder(
-          itemCount: notes.length,
+          itemCount: items.length,
           itemBuilder: (context, index) {
-            final note = notes[index];
+            final item = items[index];
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: NoteTile(
-                title: note['title'],
-                date: note['createdAt'],
+              child: Tile(
+                title: item['title'],
+                date: item['createdAt'],
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditNote(
-                        note: note,
-                        noteIndex: index,
+                  if (item.containsKey('details')) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditNote(
+                          note: item,
+                          noteIndex: index,
+                        ),
                       ),
-                    ),
+                    );
+                  } else {
+                    //final Uri urlL = Uri(scheme: 'https', host: item['title'], path: '/');
+                    final uriParts = Uri.parse(item['title']);
+                    final scheme = uriParts.scheme;
+                    final host = uriParts.host;
+                    final path = uriParts.path;
+                    final urlL = Uri(
+                      scheme: scheme.isNotEmpty ? scheme : 'https',
+                      host: host,
+                      path: path.isNotEmpty ? path : '/',
+                    );
+                    launchURL(urlL);
+                  }
+                },
+                onLongPress: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text(item.containsKey('details') ? 'Delete Note' : 'Delete Link'),
+                        content: Text('Are you sure you want to delete this ${item.containsKey('details') ? 'note' : 'link'}?'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              deleteItem(index);
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
